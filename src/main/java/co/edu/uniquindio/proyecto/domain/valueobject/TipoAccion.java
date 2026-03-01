@@ -1,0 +1,14 @@
+package co.edu.uniquindio.proyecto.domain.valueobject;
+
+public enum TipoAccion {
+
+    SOLICITUD_REGISTRADA,
+    CLASIFICADA,
+    RESPONSABLE_ASIGNADO,
+    ATENCION_INICIADA,
+    PRIORIDAD_MODIFICADA,
+    SOLICITUD_ATENDIDA,
+    SOLICITUD_CANCELADA,
+    SOLICITUD_CERRADA,
+    ESTADO_MODIFICADO
+}
