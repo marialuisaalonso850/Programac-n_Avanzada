@@ -51,7 +51,7 @@ class SolicitudTest {
 
         Solicitud solicitud = new Solicitud(
                 SolicitudId.generar(),
-                new Descripcion("Prueba"),
+                new Descripcion("Solicitud valida"),
                 TipoSolicitud.HOMOLOGACION,
                 usuario,
                 Prioridad.MEDIA,
@@ -76,7 +76,7 @@ class SolicitudTest {
 
         Solicitud solicitud = new Solicitud(
                 SolicitudId.generar(),
-                new Descripcion("Prueba"),
+                new Descripcion("Solicitud valida"),
                 TipoSolicitud.HOMOLOGACION,
                 usuario,
                 Prioridad.MEDIA,
