@@ -277,4 +277,15 @@ public class Solicitud {
     public List<Historial> getHistorial() {
         return Collections.unmodifiableList(historial);
     }
+
+    @Override
+    public String toString() {
+        return "Solicitud{" +
+                "id=" + id +
+                ", estado=" + estado +
+                ", prioridad=" + prioridad +
+                ", tipo=" + tipo +
+                ", usuario=" + usuario.getNombre() +
+                '}';
+    }
 }
