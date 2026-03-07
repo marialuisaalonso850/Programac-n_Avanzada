@@ -1,9 +1,22 @@
 package co.edu.uniquindio.proyecto.domain.valueobject;
+
 import co.edu.uniquindio.proyecto.domain.exception.ReglaDominioException;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+/**
+ * Value Object que representa un correo electrónico.
+ *
+ * <p>Garantiza las siguientes reglas de negocio:</p>
+ * <ul>
+ *     <li>No puede ser nulo.</li>
+ *     <li>No puede estar vacío.</li>
+ *     <li>Debe cumplir con un formato válido de correo electrónico.</li>
+ * </ul>
+ *
+ * <p>Es inmutable y define igualdad basada en su valor.</p>
+ */
 public class Email {
 
     private static final String EMAIL_REGEX =
@@ -11,6 +24,12 @@ public class Email {
 
     private final String valor;
 
+    /**
+     * Construye un Email validando sus reglas de dominio.
+     *
+     * @param valor correo electrónico.
+     * @throws ReglaDominioException si no cumple las validaciones.
+     */
     public Email(String valor) {
 
         if (valor == null || valor.isBlank()) {
@@ -24,6 +43,7 @@ public class Email {
         this.valor = valor;
     }
 
+    /** Retorna el valor del correo electrónico. */
     public String getValor() {
         return valor;
     }

@@ -7,19 +7,40 @@ import co.edu.uniquindio.proyecto.domain.valueobject.EstadoUsuario;
 import co.edu.uniquindio.proyecto.domain.valueobject.TipoUsuario;
 import lombok.Getter;
 
+/**
+ * Entidad que representa un usuario dentro del sistema.
+ *
+ * <p>Un usuario posee una identificación única, nombre, correo electrónico,
+ * tipo de usuario y estado. Dependiendo de su tipo y estado puede realizar
+ * diferentes acciones dentro del sistema como gestionar solicitudes o
+ * actuar como responsable.</p>
+ */
 public class Usuario {
 
     @Getter
     private final DocumentoIdentidad identificacion;
+
     @Getter
     private String nombre;
+
     @Getter
     private Email email;
+
     @Getter
     private final TipoUsuario tipoUsuario;
+
     @Getter
     private EstadoUsuario estado;
 
+    /**
+     * Constructor para crear un nuevo usuario del sistema.
+     * El usuario se crea inicialmente con estado ACTIVO.
+     *
+     * @param identificacion documento de identidad del usuario
+     * @param nombre nombre completo del usuario
+     * @param email correo electrónico del usuario
+     * @param tipoUsuario tipo de usuario dentro del sistema
+     */
     public Usuario(DocumentoIdentidad identificacion,
                    String nombre,
                    Email email,
@@ -44,6 +65,9 @@ public class Usuario {
         this.estado = EstadoUsuario.ACTIVO;
     }
 
+    /**
+     * Desactiva el usuario del sistema.
+     */
     public void desactivar() {
 
         if (estado == EstadoUsuario.INACTIVO)
@@ -52,6 +76,9 @@ public class Usuario {
         this.estado = EstadoUsuario.INACTIVO;
     }
 
+    /**
+     * Activa nuevamente un usuario que estaba inactivo.
+     */
     public void activar() {
 
         if (estado == EstadoUsuario.ACTIVO)
@@ -60,10 +87,20 @@ public class Usuario {
         this.estado = EstadoUsuario.ACTIVO;
     }
 
+    /**
+     * Verifica si el usuario se encuentra activo.
+     *
+     * @return true si el usuario está activo, false en caso contrario
+     */
     public boolean estaActivo() {
         return estado == EstadoUsuario.ACTIVO;
     }
 
+    /**
+     * Permite cambiar el correo electrónico del usuario.
+     *
+     * @param nuevoEmail nuevo correo electrónico
+     */
     public void cambiarEmail(Email nuevoEmail) {
 
         if (!estaActivo())
@@ -75,6 +112,11 @@ public class Usuario {
         this.email = nuevoEmail;
     }
 
+    /**
+     * Permite modificar el nombre del usuario.
+     *
+     * @param nuevoNombre nuevo nombre del usuario
+     */
     public void cambiarNombre(String nuevoNombre) {
 
         if (!estaActivo())
@@ -86,27 +128,58 @@ public class Usuario {
         this.nombre = nuevoNombre;
     }
 
+    /**
+     * Determina si el usuario puede ser responsable de una solicitud.
+     *
+     * @return true si el usuario es docente o coordinador y está activo
+     */
     public boolean puedeSerResponsable() {
         return estaActivo() &&
                 (esDocente() || esCoordinador());
     }
 
+    /**
+     * Verifica si el usuario tiene rol de administrador.
+     *
+     * @return true si es administrador
+     */
     public boolean esAdmin() {
         return this.tipoUsuario == TipoUsuario.ADMIN;
     }
 
+    /**
+     * Verifica si el usuario tiene rol de coordinador.
+     *
+     * @return true si es coordinador
+     */
     public boolean esCoordinador() {
         return this.tipoUsuario == TipoUsuario.COORDINADOR;
     }
 
+    /**
+     * Verifica si el usuario tiene rol de docente.
+     *
+     * @return true si es docente
+     */
     public boolean esDocente() {
         return this.tipoUsuario == TipoUsuario.DOCENTE;
     }
 
+    /**
+     * Verifica si el usuario tiene rol de estudiante.
+     *
+     * @return true si es estudiante
+     */
     public boolean esEstudiante() {
         return this.tipoUsuario == TipoUsuario.ESTUDIANTE;
     }
 
+    /**
+     * Determina si el usuario tiene permisos para cambiar la prioridad
+     * de una solicitud.
+     *
+     * @return true si el usuario es administrador o coordinador y está activo
+     */
     public boolean puedeCambiarPrioridad() {
         return estaActivo() &&
                 (esAdmin() || esCoordinador());

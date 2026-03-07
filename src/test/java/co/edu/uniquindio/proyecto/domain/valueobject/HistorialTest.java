@@ -7,8 +7,18 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
+/**
+ * Pruebas unitarias para el value object {@link Historial}.
+ *
+ * <p>Verifica la correcta creación de registros de historial
+ * y la validación de los datos obligatorios.</p>
+ */
 class HistorialTest {
 
+    /**
+     * Verifica que un historial válido se cree correctamente
+     * con todos sus atributos.
+     */
     @Test
     void historial_valido_seCreaCorrectamente() {
 
@@ -29,6 +39,9 @@ class HistorialTest {
         assertEquals("observación", historial.observacion());
     }
 
+    /**
+     * Verifica que se lance una excepción cuando la fecha es null.
+     */
     @Test
     void fechaNull_lanzaExcepcion() {
 
@@ -45,6 +58,9 @@ class HistorialTest {
         );
     }
 
+    /**
+     * Verifica que se lance una excepción cuando la acción es null.
+     */
     @Test
     void accionNull_lanzaExcepcion() {
 
@@ -60,6 +76,9 @@ class HistorialTest {
         );
     }
 
+    /**
+     * Verifica que se lance una excepción cuando el usuario es null.
+     */
     @Test
     void usuarioNull_lanzaExcepcion() {
 

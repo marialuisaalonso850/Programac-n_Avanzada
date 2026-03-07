@@ -15,6 +15,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Entidad que representa una solicitud dentro del sistema.
+ *
+ * <p>Una solicitud es la raíz del agregado y controla su ciclo de vida
+ * a través de diferentes estados: REGISTRADA, CLASIFICADA, EN_ATENCION,
+ * ATENDIDA, CERRADA y CANCELADA.</p>
+ *
+ * <p>Además mantiene un historial de eventos que registra las acciones
+ * realizadas sobre la solicitud.</p>
+ */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -31,6 +41,17 @@ public class Solicitud {
     private CanalOrigen canal;
     private List<Historial> historial;
 
+    /**
+     * Constructor para crear una nueva solicitud.
+     * La solicitud se crea inicialmente en estado REGISTRADA.
+     *
+     * @param id identificador único de la solicitud
+     * @param descripcion descripción de la solicitud
+     * @param tipo tipo de solicitud
+     * @param usuario usuario que registra la solicitud
+     * @param prioridad prioridad asignada
+     * @param canal canal de origen de la solicitud
+     */
     public Solicitud(SolicitudId id,
                      Descripcion descripcion,
                      TipoSolicitud tipo,
@@ -74,6 +95,14 @@ public class Solicitud {
     }
 
 
+    /**
+     * Clasifica una solicitud registrada asignándole un tipo.
+     *
+     * @param nuevoTipo nuevo tipo de solicitud
+     * @param funcionario funcionario que realiza la clasificación
+     * @param observacion observación registrada en el historial
+     */
+
     public void clasificar(TipoSolicitud nuevoTipo, Usuario funcionario, String observacion) {
 
         if (this.estado != EstadoSolicitud.REGISTRADA)
@@ -100,6 +129,12 @@ public class Solicitud {
         );
     }
 
+    /**
+     * Asigna un responsable a una solicitud clasificada.
+     *
+     * @param responsable usuario responsable de atender la solicitud
+     */
+
     public void asignarResponsable(Usuario responsable) {
 
         if (this.estado != EstadoSolicitud.CLASIFICADA)
@@ -119,6 +154,11 @@ public class Solicitud {
         registrarEvento(TipoAccion.RESPONSABLE_ASIGNADO, responsable, "Se inicia atención");
     }
 
+    /**
+     * Marca la solicitud como atendida.
+     *
+     * @param observacion comentario sobre la atención realizada
+     */
     public void marcarComoAtendida(String observacion) {
 
         if (this.estado != EstadoSolicitud.EN_ATENCION)
@@ -139,6 +179,11 @@ public class Solicitud {
         registrarEvento(TipoAccion.SOLICITUD_ATENDIDA, this.responsable, observacion);
     }
 
+    /**
+     * Cierra una solicitud que previamente ha sido atendida.
+     *
+     * @param observacion comentario de cierre de la solicitud
+     */
     public void cerrar(String observacion) {
 
         if (this.estado != EstadoSolicitud.ATENDIDA)
@@ -161,6 +206,11 @@ public class Solicitud {
         registrarEvento(TipoAccion.SOLICITUD_CERRADA, this.responsable, observacion);
     }
 
+    /**
+     * Cancela una solicitud siempre que no esté cerrada.
+     *
+     * @param observacion motivo de la cancelación
+     */
     public void cancelar(String observacion) {
 
         if (this.estado == EstadoSolicitud.CERRADA)
@@ -187,6 +237,14 @@ public class Solicitud {
         );
     }
 
+    /**
+     * Verifica si la transición entre dos estados de la solicitud es válida
+     * según las reglas de negocio definidas para el ciclo de vida de la solicitud.
+     *
+     * @param actual estado actual de la solicitud
+     * @param nuevo estado al que se desea cambiar
+     * @return true si la transición es permitida, false en caso contrario
+     */
     private boolean esTransicionValida(EstadoSolicitud actual, EstadoSolicitud nuevo) {
 
         return switch (actual) {
@@ -205,6 +263,14 @@ public class Solicitud {
             case CANCELADA, CERRADA -> false;
         };
     }
+    /**
+     * Cambia el estado actual de la solicitud validando que la transición
+     * entre estados sea permitida según las reglas de negocio.
+     *
+     * @param nuevoEstado nuevo estado que se desea asignar a la solicitud
+     * @param observacion comentario que justifica el cambio de estado
+     * @param usuario usuario que realiza la modificación del estado
+     */
     public void cambiarEstado(EstadoSolicitud nuevoEstado, String observacion, Usuario usuario) {
 
         if (this.estado == EstadoSolicitud.CERRADA)
@@ -236,7 +302,15 @@ public class Solicitud {
         );
     }
 
-    public void cambiarPrioridad(Prioridad nuevaPrioridad,String justificacion, Usuario usuarioModifica) {
+    /**
+     * Permite cambiar la prioridad de una solicitud siempre que no esté
+     * cerrada ni cancelada.
+     *
+     * @param nuevaPrioridad nueva prioridad que se asignará a la solicitud
+     * @param justificacion motivo del cambio de prioridad
+     * @param usuarioModifica usuario que realiza la modificación
+     */
+    public void cambiarPrioridad(Prioridad nuevaPrioridad, String justificacion, Usuario usuarioModifica) {
 
         if (this.estado == EstadoSolicitud.CERRADA)
             throw new SolicitudCerradaException(
@@ -258,12 +332,40 @@ public class Solicitud {
 
         this.prioridad = nuevaPrioridad;
 
-        registrarEvento(TipoAccion.PRIORIDAD_MODIFICADA, usuarioModifica,
-                "Nueva prioridad: " + nuevaPrioridad.name());
+        registrarEvento(
+                TipoAccion.PRIORIDAD_MODIFICADA,
+                usuarioModifica,
+                "Nueva prioridad: " + nuevaPrioridad.name()
+        );
+    }
+
+    /**
+     * Prioriza una solicitud asignándole un nivel de urgencia.
+     * RF-03 — Priorización de solicitudes.
+     *
+     * @param nuevaPrioridad prioridad a asignar
+     * @param justificacion motivo de la priorización
+     * @param usuario usuario que prioriza
+     */
+    public void priorizar(Prioridad nuevaPrioridad,
+                          String justificacion,
+                          Usuario usuario) {
+        cambiarPrioridad(nuevaPrioridad, justificacion, usuario);
     }
 
 
+    /**
+     * Registra un evento en el historial de la solicitud.
+     *
+     * @param accion tipo de acción realizada
+     * @param usuario usuario que ejecutó la acción
+     * @param observacion detalle del evento
+     */
     private void registrarEvento(TipoAccion accion, Usuario usuario, String observacion) {
+
+        if (historial == null) {
+            historial = new ArrayList<>();
+        }
 
         historial.add(new Historial(
                 LocalDateTime.now(),
@@ -272,6 +374,7 @@ public class Solicitud {
                 observacion
         ));
     }
+
 
 
     public List<Historial> getHistorial() {

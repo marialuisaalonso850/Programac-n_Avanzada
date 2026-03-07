@@ -6,8 +6,18 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
+/**
+ * Pruebas unitarias para el value object {@link DocumentoIdentidad}.
+ *
+ * <p>Verifica las reglas de validación aplicadas al crear
+ * un documento de identidad.</p>
+ */
 class DocumentoIdentidadTest {
 
+    /**
+     * Verifica que un documento de identidad válido
+     * se cree correctamente.
+     */
     @Test
     void documento_valido_seCreaCorrectamente() {
 
@@ -20,6 +30,10 @@ class DocumentoIdentidadTest {
         assertEquals("123456", documento.numero());
     }
 
+    /**
+     * Verifica que se lance una excepción cuando el tipo
+     * de documento es null.
+     */
     @Test
     void tipo_null_lanzaExcepcion() {
 
@@ -28,6 +42,10 @@ class DocumentoIdentidadTest {
         );
     }
 
+    /**
+     * Verifica que se lance una excepción cuando
+     * el número del documento es null.
+     */
     @Test
     void numero_null_lanzaExcepcion() {
 
@@ -37,6 +55,11 @@ class DocumentoIdentidadTest {
                 new DocumentoIdentidad(tipo, null)
         );
     }
+
+    /**
+     * Verifica que se lance una excepción cuando
+     * el número del documento está vacío.
+     */
     @Test
     void numero_vacio_lanzaExcepcion() {
 

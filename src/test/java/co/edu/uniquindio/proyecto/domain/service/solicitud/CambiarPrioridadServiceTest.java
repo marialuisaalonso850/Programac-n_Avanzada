@@ -10,12 +10,29 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+/**
+ * Pruebas unitarias para el servicio {@link CambiarPrioridadService}.
+ *
+ * <p>Verifica la regla de negocio relacionada con el cambio de prioridad
+ * de una solicitud.</p>
+ *
+ * <p>Solo los usuarios autorizados pueden cambiar la prioridad.</p>
+ *
+ *  * * @author Maria Luisa Alonso
+ *  *  * @author Valentina Orlas Pachon
+ *  *  * @version 1.0
+ *
+ */
 class CambiarPrioridadServiceTest {
 
     private CambiarPrioridadService service;
     private Solicitud solicitud;
     private Usuario usuario;
 
+    /**
+     * Inicializa los objetos necesarios antes de cada prueba.
+     * Se utilizan mocks para simular el comportamiento de las entidades.
+     */
     @BeforeEach
     void setUp() {
         service = new CambiarPrioridadService();
@@ -23,6 +40,10 @@ class CambiarPrioridadServiceTest {
         usuario = mock(Usuario.class);
     }
 
+    /**
+     * Verifica que un usuario autorizado puede cambiar la prioridad
+     * de una solicitud correctamente.
+     */
     @Test
     void cambiarPrioridad_autorizado_debeFuncionAR() {
 
@@ -42,6 +63,10 @@ class CambiarPrioridadServiceTest {
         );
     }
 
+    /**
+     * Verifica que si el usuario no tiene permisos para cambiar la prioridad,
+     * se lanza una excepción de dominio.
+     */
     @Test
     void cambiarPrioridad_noAutorizado_lanzaExcepcion() {
 
