@@ -2,6 +2,7 @@ package co.edu.uniquindio.proyecto.domain.repository.usuario;
 
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.valueobject.DocumentoIdentidad;
+import co.edu.uniquindio.proyecto.domain.valueobject.Email;
 
 import java.util.Optional;
 import java.util.List;
@@ -12,5 +13,9 @@ public interface UsuarioRepository {
 
     Optional<Usuario> obtenerPorIdentificacion(DocumentoIdentidad id);
 
-    List<Usuario> obtenerTodos();
+    Optional<Usuario> obtenerPorEmail(Email email);
+
+    boolean existePorIdentificacion(DocumentoIdentidad id);
+
+    boolean existePorEmail(Email email);
 }
