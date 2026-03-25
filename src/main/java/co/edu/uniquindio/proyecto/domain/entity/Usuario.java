@@ -6,7 +6,9 @@ import co.edu.uniquindio.proyecto.domain.valueobject.Email;
 import co.edu.uniquindio.proyecto.domain.valueobject.EstadoUsuario;
 import co.edu.uniquindio.proyecto.domain.valueobject.TipoUsuario;
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 public class Usuario {
 
     @Getter
@@ -44,6 +46,10 @@ public class Usuario {
         this.estado = EstadoUsuario.ACTIVO;
     }
 
+    public static Usuario crear(DocumentoIdentidad identificacion, String nombre, Email email, TipoUsuario tipoUsuario) {
+        // Al crear uno nuevo, siempre nace en ACTIVO por regla de negocio
+        return new Usuario(identificacion, nombre, email, tipoUsuario);
+    }
     public void desactivar() {
 
         if (estado == EstadoUsuario.INACTIVO)
