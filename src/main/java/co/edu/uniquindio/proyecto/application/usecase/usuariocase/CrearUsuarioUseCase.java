@@ -18,7 +18,7 @@ public class CrearUsuarioUseCase {
     }
 
     public void ejecutar(DocumentoIdentidad id, String nombre, Email email, TipoUsuario tipo) {
-        // La validación de duplicados aquí es una regla de "flujo"
+
         if (usuarioRepository.existePorIdentificacion(id)) {
             throw new ReglaDominioException("Usuario ya existe");
         }

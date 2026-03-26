@@ -7,6 +7,7 @@ import co.edu.uniquindio.proyecto.domain.valueobject.Email;
 import java.util.Optional;
 import java.util.List;
 
+
 public interface UsuarioRepository {
 
     void guardar(Usuario usuario);

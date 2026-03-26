@@ -8,6 +8,7 @@ import co.edu.uniquindio.proyecto.domain.valueobject.TipoUsuario;
 import lombok.Getter;
 import lombok.ToString;
 
+
 @ToString
 public class Usuario {
 

@@ -6,6 +6,7 @@ import co.edu.uniquindio.proyecto.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.proyecto.domain.valueobject.Email;
 import co.edu.uniquindio.proyecto.domain.valueobject.TipoUsuario;
 
+
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
