@@ -56,7 +56,7 @@ public class MainTest {
         Usuario usuarioGuardado = usuarioRepository.obtenerPorIdentificacion(clienteId)
                 .orElseThrow(() -> new RuntimeException("Error: El usuario no se guardó"));
 
-// 3. Imprimir el cuerpo completo
+// 3. Imprimir el cuerpo     completo
         System.out.println("Cuerpo del usuario registrado: " + usuarioGuardado);
 
         // 4. Crear una Solicitud
