@@ -43,4 +43,9 @@ public class UsuarioService {
         // 4. Persistir
         usuarioRepository.guardar(nuevoUsuario);
     }
+
+    public Usuario obtenerUsuario(DocumentoIdentidad id) {
+        return usuarioRepository.obtenerPorIdentificacion(id)
+                .orElseThrow(() -> new ReglaDominioException("No se encontró el usuario"));
+    }
 }
