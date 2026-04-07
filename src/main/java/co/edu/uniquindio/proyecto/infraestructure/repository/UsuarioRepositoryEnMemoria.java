@@ -15,7 +15,7 @@ public class UsuarioRepositoryEnMemoria implements UsuarioRepository {
     private final Map<DocumentoIdentidad, Usuario> baseDatos = new HashMap<>();
 
     @Override
-    public void guardar(Usuario usuario) {
+    public void crearUsuario(Usuario usuario) {
         baseDatos.put(usuario.getIdentificacion(), usuario);
     }
 
