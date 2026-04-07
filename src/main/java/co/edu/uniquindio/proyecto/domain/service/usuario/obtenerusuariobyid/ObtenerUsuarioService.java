@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.domain.service.usuario.obtenerusuario;
+package co.edu.uniquindio.proyecto.domain.service.usuario.obtenerusuariobyid;
 
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.exception.ReglaDominioException;
