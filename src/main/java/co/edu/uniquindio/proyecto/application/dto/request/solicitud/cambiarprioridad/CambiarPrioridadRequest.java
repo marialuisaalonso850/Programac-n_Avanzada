@@ -4,10 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/**
- * Método HTTP: PATCH
- * Endpoint: /api/v1/solicitudes/{id}/prioridad
- * **/
 public record CambiarPrioridadRequest(
 
         @NotBlank(message = "La nueva prioridad es obligatoria")
