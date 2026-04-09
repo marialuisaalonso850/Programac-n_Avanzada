@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface UsuarioRepository {
 
-    void guardar(Usuario usuario);
+    void crearUsuario(Usuario usuario);
 
     Optional<Usuario> obtenerPorIdentificacion(DocumentoIdentidad id);
 
