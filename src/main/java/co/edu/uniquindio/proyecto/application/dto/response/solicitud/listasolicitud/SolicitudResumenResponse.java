@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 public record SolicitudResumenResponse(
         String id,
         String codigo,
-        String tipoNombre, // Solo el nombre, no el objeto completo
-        String descripcionBreve, // Primeros 100 caracteres
+        String tipoNombre,
+        String descripcionBreve,
         EstadoSolicitud estado,
         Prioridad nivelPrioridad,
         String solicitanteNombre,
-        String responsableNombre, // puede ser null
+        String responsableNombre,
         LocalDateTime fechaCreacion
 ) {}

@@ -5,12 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * ¿Qué método HTTP usarías? PATCH
- * ¿Cuál sería el endpoint? /api/v1/solicitudes/{id}/prioridad
+ * Método HTTP: PATCH
+ * Endpoint: /api/v1/solicitudes/{id}/prioridad
  * **/
 public record CambiarPrioridadRequest(
 
-        @NotNull(message = "La nueva prioridad es obligatoria")
+        @NotBlank(message = "La nueva prioridad es obligatoria")
         String nuevaPrioridad,
 
         @NotBlank(message = "El ID del coordinador es obligatorio")

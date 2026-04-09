@@ -30,8 +30,6 @@ public class MainTest {
         AsignarResponsableUseCase asignar =
                 new AsignarResponsableUseCase(solicitudRepository, usuarioRepository);
 
-        CambiarEstadoUseCase cambiarEstado =
-                new CambiarEstadoUseCase(solicitudRepository);
 
         CerrarSolicitudUseCase cerrar =
                 new CerrarSolicitudUseCase(solicitudRepository);
@@ -73,11 +71,9 @@ public class MainTest {
         Usuario responsable = usuarioRepository.obtenerPorIdentificacion(responsableId)
                 .orElseThrow();
 
-        cambiarEstado.ejecutar(solId, EstadoSolicitud.CLASIFICADA, "Clasificación inicial", responsable);
 
         asignar.ejecutar(solId, responsableId);
 
-        cambiarEstado.ejecutar(solId, EstadoSolicitud.ATENDIDA, "Solicitud solucionada", responsable);
 
         // 6. Consultar
         List<Solicitud> atendidas = consultar.ejecutar(EstadoSolicitud.ATENDIDA);
