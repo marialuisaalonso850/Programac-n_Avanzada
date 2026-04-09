@@ -1,6 +1,7 @@
 package co.edu.uniquindio.proyecto.domain;
 
 import co.edu.uniquindio.proyecto.application.usecase.*;
+import co.edu.uniquindio.proyecto.application.usecase.usuariocase.CrearUsuarioUseCase; // Tu nuevo caso de uso // Ajusta el package según tu estructura
 import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.repository.solicitud.SolicitudRepository;
@@ -15,17 +16,20 @@ public class MainTest {
 
     public static void main(String[] args) {
 
+        // 1. Inicialización de Repositorios (Infraestructura)
         SolicitudRepository solicitudRepository = new SolicitudRepositoryEnMemoria();
         UsuarioRepository usuarioRepository = new UsuarioRepositoryEnMemoria();
 
-        CrearSolicitudUseCase crear =
+        // 2. Inicialización de Casos de Uso (Aplicación)
+        // Inyectamos los repositorios en los constructores
+        CrearUsuarioUseCase crearUsuario = new CrearUsuarioUseCase(usuarioRepository);
+
+        CrearSolicitudUseCase crearSolicitud =
                 new CrearSolicitudUseCase(solicitudRepository, usuarioRepository);
 
         AsignarResponsableUseCase asignar =
                 new AsignarResponsableUseCase(solicitudRepository, usuarioRepository);
 
-        CambiarEstadoUseCase cambiarEstado =
-                new CambiarEstadoUseCase(solicitudRepository);
 
         CerrarSolicitudUseCase cerrar =
                 new CerrarSolicitudUseCase(solicitudRepository);
@@ -33,55 +37,50 @@ public class MainTest {
         ConsultarSolicitudesPorEstadoUseCase consultar =
                 new ConsultarSolicitudesPorEstadoUseCase(solicitudRepository);
 
-        SolicitudId id = SolicitudId.generar();
+        // --- PRUEBA DE FLUJO ---
 
-        Descripcion descripcion =
-                new Descripcion("La aplicación no guarda datos");
+        // 3. Crear Usuarios usando el UseCase (o directamente si es para preparar la prueba)
+        DocumentoIdentidad responsableId = new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "24603863");
+        Email emailResp = new Email("andres@uniquindio.com");
 
-        DocumentoIdentidad documento =
-                new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "1007730781");
+        crearUsuario.ejecutar(responsableId, "Andres", emailResp, TipoUsuario.DOCENTE);
 
-        DocumentoIdentidad responsableId =
-                new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "24603863");
+        DocumentoIdentidad clienteId = new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "1007730781");
+        Email emailCliente = new Email("john@gmail.com");
 
-        Usuario responsable = new Usuario(responsableId, "Andres",
-                new Email("andres@uniquindio.com"), TipoUsuario.DOCENTE);
+        crearUsuario.ejecutar(clienteId, "John", emailCliente, TipoUsuario.DOCENTE);
 
-        Usuario usuario = new Usuario(documento, "John",
-                new Email("john@gmail.com"), TipoUsuario.DOCENTE);
+        // 2. Recuperarlo del repositorio para mostrar el estado final
+        Usuario usuarioGuardado = usuarioRepository.obtenerPorIdentificacion(clienteId)
+                .orElseThrow(() -> new RuntimeException("Error: El usuario no se guardó"));
 
-        usuarioRepository.guardar(responsable);
-        usuarioRepository.guardar(usuario);
+// 3. Imprimir el cuerpo     completo
+        System.out.println("Cuerpo del usuario registrado: " + usuarioGuardado);
 
-        crear.ejecutar(id, descripcion, TipoSolicitud.HOMOLOGACION, documento, Prioridad.ALTA,
-                CanalOrigen.CSU);
+        // 4. Crear una Solicitud
+        SolicitudId solId = SolicitudId.generar();
+        Descripcion desc = new Descripcion("La aplicación no guarda datos");
 
-        System.out.println("Solicitud creada correctamente");
+        crearSolicitud.ejecutar(solId, desc, TipoSolicitud.HOMOLOGACION, clienteId,
+                Prioridad.ALTA, CanalOrigen.CSU);
 
-        cambiarEstado.ejecutar(
-                id,
-                EstadoSolicitud.CLASIFICADA,
-                "Clasificación inicial",
-                responsable
-        );
+        System.out.println("Solicitud creada correctamente con ID: " + solId.toString());
 
-        asignar.ejecutar(id, responsableId);
+        // 5. Flujo de estados
+        // Necesitamos recuperar al objeto responsable para algunas acciones de dominio
+        Usuario responsable = usuarioRepository.obtenerPorIdentificacion(responsableId)
+                .orElseThrow();
 
-        cambiarEstado.ejecutar(
-                id,
-                EstadoSolicitud.ATENDIDA,
-                "Solicitud solucionada",
-                responsable
-        );
 
-        List<Solicitud> enAtencion =
-                consultar.ejecutar(EstadoSolicitud.ATENDIDA);
+        asignar.ejecutar(solId, responsableId);
 
-        System.out.println("Solicitudes en atención:");
-        enAtencion.forEach(System.out::println);
 
-        cerrar.ejecutar(id, "Problema solucionado");
+        // 6. Consultar
+        List<Solicitud> atendidas = consultar.ejecutar(EstadoSolicitud.ATENDIDA);
+        System.out.println("Solicitudes atendidas encontradas: " + atendidas.size());
 
-        System.out.println("Solicitud cerrada correctamente");
+        // 7. Cerrar
+        cerrar.ejecutar(solId, "Problema solucionado definitivamente");
+        System.out.println("Solicitud finalizada con éxito.");
     }
 }

@@ -1,6 +1,7 @@
 package co.edu.uniquindio.proyecto.domain.repository.solicitud;
 
 
+
 import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
 import co.edu.uniquindio.proyecto.domain.valueobject.EstadoSolicitud;
 import co.edu.uniquindio.proyecto.domain.valueobject.SolicitudId;
@@ -14,5 +15,11 @@ public interface SolicitudRepository {
 
     Optional<Solicitud> obtenerPorId(SolicitudId id);
 
+    List<Solicitud> obtenerTodas();
+
     List<Solicitud> obtenerPorEstado(EstadoSolicitud estado);
+
+    List<Solicitud> obtenerPorUsuario(String usuarioId);
+
+    List<Solicitud> obtenerPorResponsable(String responsableId);
 }
