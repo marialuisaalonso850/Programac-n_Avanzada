@@ -2,12 +2,11 @@ package co.edu.uniquindio.proyecto.domain.valueobject;
 
 public enum TipoSolicitud {
 
-    REINGRESO,
+    REGISTRO_ASIGNATURAS,
     HOMOLOGACION,
-
-    REEMBOLSOS,
-
-    CANCELACIONES
+    CANCELACION_ASIGNATURAS,
+    SOLICITUD_CUPOS,
+    CONSULTA_ACADEMICA
 
 
 }

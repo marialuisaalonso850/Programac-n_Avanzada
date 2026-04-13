@@ -5,8 +5,10 @@ import co.edu.uniquindio.proyecto.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.proyecto.domain.repository.usuario.UsuarioRepository;
 import co.edu.uniquindio.proyecto.domain.valueobject.DocumentoIdentidad;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
+@Service
 public class ObtenerUsuarioService {
 
     private final UsuarioRepository usuarioRepository;

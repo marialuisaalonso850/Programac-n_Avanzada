@@ -28,6 +28,6 @@ class EmailTest {
     void debeCrearEmailValido() {
         Email email = new Email("test@correo.com");
 
-        assertEquals("test@correo.com", email.getValor());
+        assertEquals("test@correo.com", email.valor());
     }
 }

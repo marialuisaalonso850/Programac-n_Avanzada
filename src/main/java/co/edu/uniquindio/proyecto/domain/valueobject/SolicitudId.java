@@ -1,6 +1,5 @@
 package co.edu.uniquindio.proyecto.domain.valueobject;
 
-import java.util.Objects;
 import java.util.UUID;
 
 public record SolicitudId(UUID value) {
@@ -13,6 +12,10 @@ public record SolicitudId(UUID value) {
 
     public static SolicitudId generar() {
         return new SolicitudId(UUID.randomUUID());
+    }
+
+    public String getValue() {
+        return value.toString();
     }
 
     @Override

@@ -1,8 +1,7 @@
 package co.edu.uniquindio.proyecto.domain.repository.solicitud;
 
-
-
 import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
+import co.edu.uniquindio.proyecto.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.proyecto.domain.valueobject.EstadoSolicitud;
 import co.edu.uniquindio.proyecto.domain.valueobject.SolicitudId;
 
@@ -11,15 +10,15 @@ import java.util.Optional;
 
 public interface SolicitudRepository {
 
-    void guardar(Solicitud solicitud);
+    Solicitud save(Solicitud solicitud);
 
-    Optional<Solicitud> obtenerPorId(SolicitudId id);
+    Optional<Solicitud> findById(String id);
 
-    List<Solicitud> obtenerTodas();
+    List<Solicitud> findAll();
 
-    List<Solicitud> obtenerPorEstado(EstadoSolicitud estado);
+    List<Solicitud> findByEstado(EstadoSolicitud estado);
 
-    List<Solicitud> obtenerPorUsuario(String usuarioId);
+    List<Solicitud> findBySolicitanteIdentificacion(DocumentoIdentidad usuarioId);
 
-    List<Solicitud> obtenerPorResponsable(String responsableId);
+    List<Solicitud> findByResponsableIdentificacion(DocumentoIdentidad responsableId);
 }
