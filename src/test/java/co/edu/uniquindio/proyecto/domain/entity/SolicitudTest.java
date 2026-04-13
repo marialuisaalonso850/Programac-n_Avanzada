@@ -13,11 +13,9 @@ class SolicitudTest {
     void deberiaCrearSolicitudCorrectamente() {
         Usuario usuario = UsuarioTestDataFactory.crearUsuarioValido();
 
-        // Corregido: El constructor de Solicitud NO recibe TipoSolicitud (según tu código anterior)
-        // Se inicializa en null hasta que se clasifica.
         Solicitud solicitud = new Solicitud(
                 SolicitudId.generar(),
-                new Descripcion("Necesito homologación"),
+                new Descripcion("Solicitud de homologación de materias"), // +10 caracteres
                 usuario,
                 Prioridad.MEDIA,
                 CanalOrigen.CSU
@@ -25,7 +23,7 @@ class SolicitudTest {
 
         assertNotNull(solicitud.getId());
         assertEquals(EstadoSolicitud.REGISTRADA, solicitud.getEstado());
-        assertEquals(1, solicitud.getHistorial().size()); // Verifica que se registró el evento
+        assertEquals(1, solicitud.getHistorial().size());
     }
 
     @Test
@@ -36,17 +34,16 @@ class SolicitudTest {
 
         Solicitud solicitud = new Solicitud(
                 SolicitudId.generar(),
-                new Descripcion("Prueba"),
+                new Descripcion("Descripción válida de más de diez caracteres"), // Corregido
                 usuario,
                 Prioridad.MEDIA,
                 CanalOrigen.CSU
         );
 
-        // Paso 1: Clasificar (Obligatorio para poder asignar según tu validación de estado)
-        solicitud.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, coordinador, "Ok");
+        // Paso 1: Clasificar
+        solicitud.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, coordinador, "Clasificación correcta");
 
         // Paso 2: Asignar Responsable
-        // Corregido: Enviamos (Responsable, QuienAsigna)
         solicitud.asignarResponsable(docente, coordinador);
 
         assertEquals(EstadoSolicitud.EN_ATENCION, solicitud.getEstado());
@@ -57,19 +54,33 @@ class SolicitudTest {
     void deberiaCambiarPrioridad() {
         Usuario usuario = UsuarioTestDataFactory.crearUsuarioValido();
         Usuario coordinador = UsuarioTestDataFactory.crearCoordinadorValido();
-        Solicitud solicitud = new Solicitud(SolicitudId.generar(), new Descripcion("Prueba"), usuario, Prioridad.MEDIA, CanalOrigen.CSU);
+
+        // Corregido: "Prueba" -> "Cambio de prioridad por urgencia"
+        Solicitud solicitud = new Solicitud(
+                SolicitudId.generar(),
+                new Descripcion("Cambio de prioridad por urgencia médica"),
+                usuario,
+                Prioridad.MEDIA,
+                CanalOrigen.CSU
+        );
 
         solicitud.cambiarPrioridad(Prioridad.ALTA, coordinador, "Se requiere urgencia");
 
         assertEquals(Prioridad.ALTA, solicitud.getPrioridad());
-        // El historial ahora debe tener 2 eventos (Creación y Cambio de Prioridad)
         assertEquals(2, solicitud.getHistorial().size());
     }
 
     @Test
     void deberiaCancelarSolicitud() {
         Usuario usuario = UsuarioTestDataFactory.crearUsuarioValido();
-        Solicitud solicitud = new Solicitud(SolicitudId.generar(), new Descripcion("Prueba"), usuario, Prioridad.MEDIA, CanalOrigen.CSU);
+
+        Solicitud solicitud = new Solicitud(
+                SolicitudId.generar(),
+                new Descripcion("Solicitud de retiro de asignatura por cruce"),
+                usuario,
+                Prioridad.MEDIA,
+                CanalOrigen.CSU
+        );
 
         solicitud.cancelar(usuario, "Ya no lo necesito");
 
