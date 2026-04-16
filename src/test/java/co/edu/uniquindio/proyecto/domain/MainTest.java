@@ -25,7 +25,7 @@ public class MainTest {
         ObtenerUsuarioService obtenerUsuarioService = new ObtenerUsuarioService(usuarioRepository);
         CrearUsuarioService crearUsuarioService = new CrearUsuarioService(usuarioRepository);
 
-        CrearUsuarioUseCase crearUsuario = new CrearUsuarioUseCase(crearUsuarioService);
+        CrearUsuarioUseCase crearUsuario = new CrearUsuarioUseCase(usuarioRepository);
         CrearSolicitudUseCase crearSolicitud = new CrearSolicitudUseCase(solicitudRepository, obtenerUsuarioService);
         AsignarResponsableUseCase asignar = new AsignarResponsableUseCase(solicitudRepository, obtenerUsuarioService);
         CerrarSolicitudUseCase cerrar = new CerrarSolicitudUseCase(solicitudRepository);
