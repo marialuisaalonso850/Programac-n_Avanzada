@@ -17,7 +17,7 @@ public interface UsuarioMapper {
 
     @Mapping(target = "identificacion", source = "identificacion.numero")
     @Mapping(target = "email", source = "email.valor")
-    @Mapping(target = "activo", constant = "true") // O usa una lógica para usuario.estaActivo()
+    @Mapping(target = "activo", expression = "java(usuario.getEstado() == co.edu.uniquindio.proyecto.domain.valueobject.EstadoUsuario.ACTIVO)")
     DetalleUsuarioResponse toDetalleResponse(Usuario usuario);
 
     // MÉTODOS DE APOYO: Aquí le explicas a MapStruct cómo crear tus Value Objects
