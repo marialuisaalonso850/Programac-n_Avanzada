@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CrearUsuarioRequest(
+        @NotBlank(message = "El tipo de documento es obligatorio")
+        String tipoDocumento,
+
         @NotBlank(message = "La identificación es obligatoria")
         String identificacion,
 

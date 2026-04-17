@@ -39,4 +39,20 @@ public class GlobalExceptionHandler {
         body.put("mensaje", mensaje);
         return new ResponseEntity<>(body, status);
     }
+
+    @ExceptionHandler(UsuarioNoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleUsuarioNoEncontrado(UsuarioNoEncontradoException ex) {
+        // Devuelve 404 Not Found
+        return crearRespuestaError(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(UsuarioYaExisteException.class)
+    public ResponseEntity<Map<String, Object>> handleUsuarioYaExiste(UsuarioYaExisteException ex) {
+        // Devuelve 400 Bad Request o 409 Conflict
+        return crearRespuestaError(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
+        return crearRespuestaError(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno: " + ex.getMessage());
+    }
 }
