@@ -2,7 +2,9 @@ package co.edu.uniquindio.proyecto.domain.service.usuario.desactivarusuario;
 
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.exception.ReglaDominioException;
+import org.springframework.stereotype.Service;
 
+@Service
 public class DesactivarUsuarioService {
 
     public void desactivarUsuario(Usuario usuario, boolean tieneSolicitudesActivas) {

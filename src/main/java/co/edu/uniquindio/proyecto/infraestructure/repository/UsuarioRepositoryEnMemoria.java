@@ -42,7 +42,9 @@ public class UsuarioRepositoryEnMemoria implements UsuarioRepository {
                 .anyMatch(u -> u.getEmail().equals(email));
     }
 
+    @Override
     public List<Usuario> obtenerTodos() {
         return new ArrayList<>(baseDatos.values());
     }
+
 }

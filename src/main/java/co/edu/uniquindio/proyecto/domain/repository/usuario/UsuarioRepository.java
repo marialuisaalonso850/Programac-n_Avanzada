@@ -20,4 +20,5 @@ public interface UsuarioRepository {
     boolean existePorIdentificacion(DocumentoIdentidad id);
 
     boolean existePorEmail(Email email);
+    List<Usuario> obtenerTodos();
 }
