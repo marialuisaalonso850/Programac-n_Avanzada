@@ -1,6 +1,6 @@
 package co.edu.uniquindio.proyecto.infraestructure.persistencia;
 import co.edu.uniquindio.proyecto.infraestructure.persistencia.entity.UsuarioEntity;
-import co.edu.uniquindio.proyecto.infraestructure.persistencia.repository.UsuarioJpaRepository;
+import co.edu.uniquindio.proyecto.infraestructure.persistencia.repository.adaptador.UsuarioJpaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
