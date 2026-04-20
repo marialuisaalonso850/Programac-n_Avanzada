@@ -2,38 +2,47 @@ package co.edu.uniquindio.proyecto.application.usecase.solicitudCase;
 
 import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
+import co.edu.uniquindio.proyecto.domain.exception.EntidadNoEncontradaException;
+import co.edu.uniquindio.proyecto.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.proyecto.domain.repository.solicitud.SolicitudRepository;
+import co.edu.uniquindio.proyecto.domain.repository.usuario.UsuarioRepository;
+import co.edu.uniquindio.proyecto.domain.service.SolicitudService.AsignarResponsableService;
 import co.edu.uniquindio.proyecto.domain.service.usuario.obtenerusuariobyid.ObtenerUsuarioService;
 import co.edu.uniquindio.proyecto.domain.valueobject.*;
+import co.edu.uniquindio.proyecto.infraestructure.rest.security.helper.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // [cite: 95]
+import org.springframework.transaction.annotation.Transactional;
 
-@Service // [cite: 96]
-@RequiredArgsConstructor // [cite: 97]
+@Service
+@RequiredArgsConstructor
 public class AsignarResponsableUseCase {
 
     private final SolicitudRepository solicitudRepository;
-    private final ObtenerUsuarioService usuarioService;
+    private final UsuarioRepository usuarioRepository;
+    private final AsignarResponsableService dominioService;
+    private final UsuarioAutenticado authHelper;
 
-    /**
-     * @Transactional asegura que:
-     * 1. Se inicie una transacción al entrar.
-     * 2. Se haga commit si completa exitosamente.
-     * 3. Se haga rollback si lanza una excepción (ej. Solicitud no encontrada).
-     */
-    @Transactional // [cite: 101, 151]
-    public Solicitud ejecutar(SolicitudId solicitudId, DocumentoIdentidad responsableId, DocumentoIdentidad gestorId) {
+    @Transactional
+    public Solicitud ejecutar(String solicitudId, String responsableId) {
 
-        Solicitud solicitud = solicitudRepository.findById(solicitudId.getValue().toString())
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+        DocumentoIdentidad idGestor = authHelper.getDocumentoIdentidad();
+        Usuario gestor = usuarioRepository.obtenerPorIdentificacion(idGestor)
+                .orElseThrow(() -> new ReglaDominioException("Gestor no encontrado"));
 
-        // 2. Obtener los usuarios involucrados
-        Usuario responsable = usuarioService.obtenerUsuario(responsableId);
-        Usuario gestor = usuarioService.obtenerUsuario(gestorId);
+        Usuario responsable = usuarioRepository.obtenerPorIdentificacion(new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, responsableId))
+                .orElseThrow(() -> new ReglaDominioException("El responsable elegido no existe"));
 
-        solicitud.asignarResponsable(responsable, gestor);
+        // 3. Sobre qué solicitud
+        Solicitud solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new ReglaDominioException("Solicitud no encontrada"));
 
-        return solicitudRepository.save(solicitud);
+        // 4. Delegamos al servicio de dominio (Valida ROL y asocia)
+        dominioService.ejecutar(solicitud, gestor, responsable);
+
+        // 5. Persistimos
+        solicitudRepository.save(solicitud);
+
+        return solicitud;
     }
 }

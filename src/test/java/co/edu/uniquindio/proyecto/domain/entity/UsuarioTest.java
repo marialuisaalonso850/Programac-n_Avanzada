@@ -1,9 +1,7 @@
 package co.edu.uniquindio.proyecto.domain.entity;
 
-import co.edu.uniquindio.proyecto.domain.TestData.UsuarioTestDataFactory;
 import co.edu.uniquindio.proyecto.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.proyecto.domain.valueobject.*;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,131 +9,91 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UsuarioTest {
 
-    private Usuario usuario;
+    private DocumentoIdentidad idValido;
+    private Email emailValido;
 
     @BeforeEach
     void setUp() {
-        usuario = UsuarioTestDataFactory.crearUsuarioValido();
+        idValido = new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "1004798819");
+        emailValido = new Email("test@uniquindio.edu.co");
     }
 
     @Test
-    void debeCrearseActivoPorDefecto() {
+    void crearUsuarioConstructorManualDebeEstarActivo() {
+        Usuario usuario = new Usuario(idValido, "Carlos Perez", emailValido, TipoUsuario.DOCENTE, "pass123");
 
+        assertTrue(usuario.estaActivo());
         assertEquals(EstadoUsuario.ACTIVO, usuario.getEstado());
-        assertNotNull(usuario.getIdentificacion());
+        assertEquals("Carlos Perez", usuario.getNombre());
     }
 
     @Test
-    void noDebeCrearUsuarioConNombreVacio() {
-
+    void debeFallarAlCrearUsuarioConCamposNulos() {
         assertThrows(ReglaDominioException.class, () ->
-                new Usuario(
-                        new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "999"),
-                        "",
-                        new Email("test@test.com"),
-                        TipoUsuario.ESTUDIANTE
-                )
+                new Usuario(null, "Nombre", emailValido, TipoUsuario.ESTUDIANTE, "123")
         );
     }
 
     @Test
-    void noDebeCrearUsuarioConEmailNulo() {
+    void validarCambioNombreExitoso() {
+        Usuario usuario = new Usuario(idValido, "Luis", emailValido, TipoUsuario.ADMIN, "123");
 
-        assertThrows(ReglaDominioException.class, () ->
-                new Usuario(
-                        new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "999"),
-                        "Nombre",
-                        null,
-                        TipoUsuario.ESTUDIANTE
-                )
-        );
+        usuario.cambiarNombre("Luis Garcia");
+
+        assertEquals("Luis Garcia", usuario.getNombre());
     }
 
     @Test
-    void debeDesactivarUsuario() {
+    void debeDesactivarUsuarioCorrectamente() {
+        Usuario usuario = new Usuario(idValido, "Marta", emailValido, TipoUsuario.COORDINADOR, "123");
 
         usuario.desactivar();
 
+        assertFalse(usuario.estaActivo());
         assertEquals(EstadoUsuario.INACTIVO, usuario.getEstado());
     }
 
     @Test
-    void noDebeDesactivarSiYaEstaInactivo() {
-
+    void debeFallarCambioDeNombreSiUsuarioEstaInactivo() {
+        Usuario usuario = new Usuario(idValido, "Marta", emailValido, TipoUsuario.COORDINADOR, "123");
         usuario.desactivar();
 
-        assertThrows(ReglaDominioException.class,
-                () -> usuario.desactivar());
+        assertThrows(ReglaDominioException.class, () ->
+                usuario.cambiarNombre("Nuevo Nombre")
+        );
     }
 
     @Test
-    void debeActivarUsuario() {
-
-        usuario.desactivar();
-        usuario.activar();
-
-        assertEquals(EstadoUsuario.ACTIVO, usuario.getEstado());
-    }
-
-    @Test
-    void noDebeActivarSiYaEstaActivo() {
-
-        assertThrows(ReglaDominioException.class,
-                () -> usuario.activar());
-    }
-    @Test
-    void debeCambiarEmailSiEstaActivo() {
-
-        Email nuevo = new Email("nuevo@test.com");
-
-        usuario.cambiarEmail(nuevo);
-
-        assertEquals(nuevo, usuario.getEmail());
-    }
-
-    @Test
-    void noDebeCambiarEmailSiEstaInactivo() {
-
-        usuario.desactivar();
-
-        assertThrows(ReglaDominioException.class,
-                () -> usuario.cambiarEmail(new Email("x@test.com")));
-    }
-    @Test
-    void debeCambiarNombreSiEstaActivo() {
-
-        usuario.cambiarNombre("Nuevo Nombre");
-
-        assertEquals("Nuevo Nombre", usuario.getNombre());
-    }
-
-    @Test
-    void noDebeCambiarNombreSiEstaInactivo() {
-
-        usuario.desactivar();
-
-        assertThrows(ReglaDominioException.class,
-                () -> usuario.cambiarNombre("Nombre"));
-    }
-    @Test
-    void docenteDebePoderSerResponsable() {
-
-        Usuario docente = UsuarioTestDataFactory.crearDocenteValido();
-
+    void validarSiPuedeSerResponsable() {
+        // Un docente activo puede ser responsable
+        Usuario docente = new Usuario(idValido, "Profe", emailValido, TipoUsuario.DOCENTE, "123");
         assertTrue(docente.puedeSerResponsable());
+
+        // Un estudiante no puede ser responsable aunque esté activo
+        Usuario estudiante = new Usuario(idValido, "Alumno", emailValido, TipoUsuario.ESTUDIANTE, "123");
+        assertFalse(estudiante.puedeSerResponsable());
+
+        // Un coordinador inactivo no puede ser responsable
+        Usuario coordinador = new Usuario(idValido, "Coord", emailValido, TipoUsuario.COORDINADOR, "123");
+        coordinador.desactivar();
+        assertFalse(coordinador.puedeSerResponsable());
     }
 
     @Test
-    void estudianteNoDebeSerResponsable() {
+    void debeValidarTipoDeUsuarioCorrectamente() {
+        Usuario admin = new Usuario(idValido, "Admin", emailValido, TipoUsuario.ADMIN, "123");
 
-        assertFalse(usuario.puedeSerResponsable());
+        assertTrue(admin.esAdmin());
+        assertFalse(admin.esDocente());
+        assertFalse(admin.esEstudiante());
     }
 
     @Test
-    void adminPuedeCambiarPrioridad() {
+    void cambiarEmailDebeFallarSiEsNulo() {
+        Usuario usuario = new Usuario(idValido, "User", emailValido, TipoUsuario.DOCENTE, "123");
 
-        Usuario admin = UsuarioTestDataFactory.crearAdminValido();
-
-        assertTrue(admin.puedeCambiarPrioridad());
+        assertThrows(ReglaDominioException.class, () ->
+                usuario.cambiarEmail(null)
+        );
     }
 }

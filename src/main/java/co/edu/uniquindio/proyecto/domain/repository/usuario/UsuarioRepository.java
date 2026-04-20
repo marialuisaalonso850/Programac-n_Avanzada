@@ -11,7 +11,8 @@ import java.util.List;
 @Repository
 public interface UsuarioRepository {
 
-    void crearUsuario(Usuario usuario);
+    void crearUsuario(Usuario usuario, String passwordEncriptado);
+    void actualizarUsuario(Usuario usuario);
 
     Optional<Usuario> obtenerPorIdentificacion(DocumentoIdentidad id);
 

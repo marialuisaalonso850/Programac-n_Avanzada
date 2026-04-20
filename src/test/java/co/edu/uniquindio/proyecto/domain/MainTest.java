@@ -1,78 +1,101 @@
 package co.edu.uniquindio.proyecto.domain;
 
+import co.edu.uniquindio.proyecto.application.dto.request.solicitud.crearsolicitud.CrearSolicitudRequest;
 import co.edu.uniquindio.proyecto.application.usecase.solicitudCase.*;
 import co.edu.uniquindio.proyecto.application.usecase.usuariocase.CrearUsuarioUseCase;
 import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.repository.solicitud.SolicitudRepository;
 import co.edu.uniquindio.proyecto.domain.repository.usuario.UsuarioRepository;
-import co.edu.uniquindio.proyecto.domain.service.usuario.crearusuario.CrearUsuarioService;
+import co.edu.uniquindio.proyecto.domain.service.SolicitudService.AsignarResponsableService;
 import co.edu.uniquindio.proyecto.domain.service.usuario.obtenerusuariobyid.ObtenerUsuarioService;
 import co.edu.uniquindio.proyecto.domain.valueobject.*;
-import co.edu.uniquindio.proyecto.infraestructure.repository.SolicitudRepositoryEnMemoria;
-import co.edu.uniquindio.proyecto.infraestructure.repository.UsuarioRepositoryEnMemoria;
 import co.edu.uniquindio.proyecto.infraestructure.rest.mapper.SolicitudMapper;
 import co.edu.uniquindio.proyecto.infraestructure.rest.mapper.SolicitudMapperImpl;
+import co.edu.uniquindio.proyecto.infraestructure.rest.security.helper.UsuarioAutenticado;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 public class MainTest {
 
     public static void main(String[] args) {
 
-        SolicitudRepository solicitudRepository = new SolicitudRepositoryEnMemoria();
-        UsuarioRepository usuarioRepository = new UsuarioRepositoryEnMemoria();
+        // 1. REPOSITORIOS (Deben estar instanciados con tu implementación real de JPA/DB)
+        SolicitudRepository solicitudRepository = null;
+        UsuarioRepository usuarioRepository = null;
         SolicitudMapper mapper = new SolicitudMapperImpl();
 
-        ObtenerUsuarioService obtenerUsuarioService = new ObtenerUsuarioService(usuarioRepository);
-        CrearUsuarioService crearUsuarioService = new CrearUsuarioService(usuarioRepository);
+        // 2. MOCKS MANUALES (Necesarios para que los constructores funcionen fuera de Spring)
+        PasswordEncoder passwordEncoder = new PasswordEncoder() {
+            @Override public String encode(CharSequence raw) { return "hash_" + raw; }
+            @Override public boolean matches(CharSequence raw, String encoded) { return true; }
+        };
 
-        CrearUsuarioUseCase crearUsuario = new CrearUsuarioUseCase(usuarioRepository);
+        UsuarioAutenticado authHelper = new UsuarioAutenticado() {
+            @Override public DocumentoIdentidad getDocumentoIdentidad() {
+                return new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "24603863");
+            }
+        };
+
+        // 3. SERVICIOS
+        ObtenerUsuarioService obtenerUsuarioService = new ObtenerUsuarioService(usuarioRepository);
+        AsignarResponsableService asignarResponsableService = new AsignarResponsableService();
+
+        // 4. INSTANCIACIÓN DE USE CASES (Aquí es donde pasas solo los argumentos que pide el constructor)
+
+        // Constructor pide: (UsuarioRepository, PasswordEncoder) -> 2 argumentos
+        CrearUsuarioUseCase crearUsuario = new CrearUsuarioUseCase(usuarioRepository, passwordEncoder);
+
+        // Constructor pide: (SolicitudRepository, ObtenerUsuarioService) -> 2 argumentos
         CrearSolicitudUseCase crearSolicitud = new CrearSolicitudUseCase(solicitudRepository, obtenerUsuarioService);
-        AsignarResponsableUseCase asignar = new AsignarResponsableUseCase(solicitudRepository, obtenerUsuarioService);
+
+        // Constructor pide: (SolicitudRepository, UsuarioRepository, AsignarResponsableService, UsuarioAutenticado) -> 4 argumentos
+        AsignarResponsableUseCase asignar = new AsignarResponsableUseCase(
+                solicitudRepository,
+                usuarioRepository,
+                asignarResponsableService,
+                authHelper
+        );
+
         CerrarSolicitudUseCase cerrar = new CerrarSolicitudUseCase(solicitudRepository);
-        ConsultarSolicitudesPorEstadoUseCase consultar = new ConsultarSolicitudesPorEstadoUseCase(solicitudRepository, mapper);
+
+        // --- 5. INICIO DEL FLUJO DE PRUEBA (Aquí usas los métodos .ejecutar()) ---
 
         DocumentoIdentidad responsableId = new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "24603863");
-        crearUsuario.ejecutar(responsableId, "Andres Docente", new Email("andres@uniquindio.com"), TipoUsuario.DOCENTE);
-
         DocumentoIdentidad clienteId = new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "1007730781");
-        crearUsuario.ejecutar(clienteId, "John Estudiante", new Email("john@gmail.com"), TipoUsuario.ESTUDIANTE);
 
-        Usuario john = usuarioRepository.obtenerPorIdentificacion(clienteId)
-                .orElseThrow(() -> new RuntimeException("Error: Usuario no encontrado"));
+        System.out.println("--- Ejecutando registros ---");
 
-        System.out.println("--- Iniciando Flujo de Solicitud Exitosa ---");
+        // AQUÍ es donde el método recibe los 5 parámetros, NO en el constructor
+        crearUsuario.ejecutar(responsableId, "Andres Docente", new Email("andres@uniquindio.com"), TipoUsuario.DOCENTE, "admin123");
+        crearUsuario.ejecutar(clienteId, "John Estudiante", new Email("john@gmail.com"), TipoUsuario.ESTUDIANTE, "john123");
 
+        // Registro de Solicitud
         SolicitudId solId1 = SolicitudId.generar();
-        crearSolicitud.ejecutar(solId1, new Descripcion("Problema con reingreso"), clienteId, Prioridad.MEDIA, CanalOrigen.CSU);
 
-        Solicitud s1 = solicitudRepository.findById(solId1.getValue())
-                .orElseThrow(() -> new RuntimeException("No se encontró la solicitud 1"));
+// 2. Crear el DTO (El Request)
+        CrearSolicitudRequest request = new CrearSolicitudRequest(
+                TipoSolicitud.REGISTRO_ASIGNATURAS,
+                "Problema con reingreso",
+                CanalOrigen.CSU
+        );
 
-        s1.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, john, "Se clasifica correctamente");
+// 3. Ejecutar con los 3 argumentos exactos
+        crearSolicitud.ejecutar( request, clienteId);
+
+        Solicitud s1 = solicitudRepository.findById(solId1.getValue().toString())
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        Usuario admin = usuarioRepository.obtenerPorIdentificacion(responsableId).get();
+
+        // Clasificar y guardar
+        s1.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, Prioridad.ALTA, admin, "Prioridad alta por tiempo");
         solicitudRepository.save(s1);
 
-        asignar.ejecutar(solId1, responsableId, clienteId);
+        // Asignar responsable
+        asignar.ejecutar(solId1.getValue().toString(), responsableId.numero());
 
-        s1.marcarComoAtendida("El estudiante ya puede matricular");
-        solicitudRepository.save(s1);
-
-        cerrar.ejecutar(solId1, "Proceso finalizado exitosamente");
-
-
-        s1 = solicitudRepository.findById(solId1.getValue()).get();
-        System.out.println("Solicitud 1 finalizada. Estado actual: " + s1.getEstado());
-
-        System.out.println("\n--- Iniciando Flujo de Cancelación ---");
-
-        SolicitudId solId2 = SolicitudId.generar();
-        crearSolicitud.ejecutar(solId2, new Descripcion("Solicitud para cancelar"), clienteId, Prioridad.BAJA, CanalOrigen.CSU);
-
-        Solicitud s2 = solicitudRepository.findById(solId2.getValue())
-                .orElseThrow(() -> new RuntimeException("No se encontró la solicitud 2"));
-
-        s2.cancelar(john, "El estudiante desistió del proceso");
-        solicitudRepository.save(s2);
-
-        System.out.println("Solicitud 2 finalizada. Estado actual: " + s2.getEstado());
+        System.out.println("Flujo terminado correctamente.");
     }
 }

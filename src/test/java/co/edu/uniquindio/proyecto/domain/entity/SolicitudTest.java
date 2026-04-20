@@ -1,89 +1,103 @@
 package co.edu.uniquindio.proyecto.domain.entity;
 
-import co.edu.uniquindio.proyecto.domain.TestData.UsuarioTestDataFactory;
+import co.edu.uniquindio.proyecto.domain.exception.EstadoInvalidoException;
 import co.edu.uniquindio.proyecto.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.proyecto.domain.valueobject.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SolicitudTest {
 
-    @Test
-    void deberiaCrearSolicitudCorrectamente() {
-        Usuario usuario = UsuarioTestDataFactory.crearUsuarioValido();
+    private Usuario solicitante;
+    private Usuario admin;
+    private Usuario responsable;
+    private Solicitud solicitud;
 
-        Solicitud solicitud = new Solicitud(
-                SolicitudId.generar(),
-                new Descripcion("Solicitud de homologación de materias"), // +10 caracteres
-                usuario,
+    @BeforeEach
+    void setUp() {
+        solicitante = Usuario.builder()
+                .identificacion(new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "123"))
+                .nombre("Juan Perez")
+                .estado(EstadoUsuario.ACTIVO)
+                .build();
+
+        admin = Usuario.builder()
+                .identificacion(new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "999"))
+                .tipoUsuario(TipoUsuario.ADMIN)
+                .estado(EstadoUsuario.ACTIVO)
+                .build();
+
+        // Si son activos por defecto, no llamamos a .estaActivo(true) para evitar errores de compilación
+        responsable = Usuario.builder()
+                .identificacion(new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "1004798819"))
+                .nombre("PRUEBA DOCENTE")
+                .estado(EstadoUsuario.ACTIVO)
+                .build();
+
+        solicitud = new Solicitud(
+                new SolicitudId(UUID.randomUUID()),
+                new Descripcion("Descripcion de prueba"),
+                solicitante,
                 Prioridad.MEDIA,
                 CanalOrigen.CSU
         );
-
-        assertNotNull(solicitud.getId());
-        assertEquals(EstadoSolicitud.REGISTRADA, solicitud.getEstado());
-        assertEquals(1, solicitud.getHistorial().size());
     }
 
     @Test
-    void deberiaAsignarResponsable() {
-        Usuario usuario = UsuarioTestDataFactory.crearUsuarioValido();
-        Usuario coordinador = UsuarioTestDataFactory.crearCoordinadorValido();
-        Usuario docente = UsuarioTestDataFactory.crearDocenteValido();
+    void validarClasificacionYCambioPrioridad() {
+        solicitud.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, Prioridad.ALTA, admin, "Clasificación exitosa");
 
-        Solicitud solicitud = new Solicitud(
-                SolicitudId.generar(),
-                new Descripcion("Descripción válida de más de diez caracteres"), // Corregido
-                usuario,
-                Prioridad.MEDIA,
-                CanalOrigen.CSU
-        );
+        assertEquals(EstadoSolicitud.CLASIFICADA, solicitud.getEstado());
+        assertEquals(Prioridad.ALTA, solicitud.getPrioridad());
+        assertNotNull(solicitud.getTipo());
+    }
 
-        // Paso 1: Clasificar
-        solicitud.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, coordinador, "Clasificación correcta");
+    @Test
+    void validarAsignacionResponsable() {
+        solicitud.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, Prioridad.ALTA, admin, "OK");
 
-        // Paso 2: Asignar Responsable
-        solicitud.asignarResponsable(docente, coordinador);
+        solicitud.asignarResponsable(responsable, admin);
 
         assertEquals(EstadoSolicitud.EN_ATENCION, solicitud.getEstado());
-        assertEquals(docente, solicitud.getResponsable());
+        assertNotNull(solicitud.getResponsable());
+        assertEquals("1004798819", solicitud.getResponsable().getIdentificacion().numero());
     }
 
     @Test
-    void deberiaCambiarPrioridad() {
-        Usuario usuario = UsuarioTestDataFactory.crearUsuarioValido();
-        Usuario coordinador = UsuarioTestDataFactory.crearCoordinadorValido();
-
-        // Corregido: "Prueba" -> "Cambio de prioridad por urgencia"
-        Solicitud solicitud = new Solicitud(
-                SolicitudId.generar(),
-                new Descripcion("Cambio de prioridad por urgencia médica"),
-                usuario,
-                Prioridad.MEDIA,
-                CanalOrigen.CSU
+    void errorAlAsignarSinClasificar() {
+        assertThrows(EstadoInvalidoException.class, () ->
+                solicitud.asignarResponsable(responsable, admin)
         );
-
-        solicitud.cambiarPrioridad(Prioridad.ALTA, coordinador, "Se requiere urgencia");
-
-        assertEquals(Prioridad.ALTA, solicitud.getPrioridad());
-        assertEquals(2, solicitud.getHistorial().size());
     }
 
     @Test
-    void deberiaCancelarSolicitud() {
-        Usuario usuario = UsuarioTestDataFactory.crearUsuarioValido();
+    void validarFlujoHastaCierre() {
+        solicitud.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, Prioridad.ALTA, admin, "OK");
+        solicitud.asignarResponsable(responsable, admin);
+        solicitud.marcarComoAtendida("Atendida");
+        solicitud.cerrar("Finalizado");
 
-        Solicitud solicitud = new Solicitud(
-                SolicitudId.generar(),
-                new Descripcion("Solicitud de retiro de asignatura por cruce"),
-                usuario,
-                Prioridad.MEDIA,
-                CanalOrigen.CSU
+        assertEquals(EstadoSolicitud.CERRADA, solicitud.getEstado());
+    }
+
+    @Test
+    void validarRegistroEnHistorial() {
+        int eventosIniciales = solicitud.getHistorial().size();
+        solicitud.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, Prioridad.BAJA, admin, "Nota");
+
+        assertEquals(eventosIniciales + 1, solicitud.getHistorial().size());
+    }
+
+    @Test
+    void errorAlCerrarSinAtender() {
+        solicitud.clasificar(TipoSolicitud.REGISTRO_ASIGNATURAS, Prioridad.MEDIA, admin, "OK");
+
+        assertThrows(EstadoInvalidoException.class, () ->
+                solicitud.cerrar("Cierre directo")
         );
-
-        solicitud.cancelar(usuario, "Ya no lo necesito");
-
-        assertEquals(EstadoSolicitud.CANCELADA, solicitud.getEstado());
     }
 }

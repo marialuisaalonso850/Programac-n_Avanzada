@@ -2,10 +2,7 @@ package co.edu.uniquindio.proyecto.domain.entity;
 
 import co.edu.uniquindio.proyecto.domain.valueobject.*;
 import co.edu.uniquindio.proyecto.domain.exception.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,7 +11,10 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString(exclude = {"solicitante", "responsable"})
 @AllArgsConstructor
+@Builder
+@Setter
 public class Solicitud {
 
     private SolicitudId id;
@@ -26,7 +26,8 @@ public class Solicitud {
     private EstadoSolicitud estado;
     private Prioridad prioridad;
     private CanalOrigen canal;
-    private List<Historial> historial;
+    @Builder.Default
+    private List<Historial> historial = new ArrayList<>();
 
     /**
      * Constructor para Registro de Solicitudes (RF-01)
@@ -61,13 +62,44 @@ public class Solicitud {
     /**
      * RF-02: Clasificación de solicitudes académicas.
      */
-    public void clasificar(TipoSolicitud nuevoTipo, Usuario funcionario, String observacion) {
+    /**
+     * RF-02: Clasificación de solicitudes académicas.
+     * La justificación es obligatoria, pero el tipo y la prioridad pueden ser opcionales
+     * si ya existen o si se desea mantener el valor actual.
+     */
+    public void clasificar(TipoSolicitud nuevoTipo, Prioridad nuevaPrioridad, Usuario funcionario, String observacion) {
+        // 1. Validaciones de estado y obligatoriedad de la justificación
         validarEstado(EstadoSolicitud.REGISTRADA, "Solo se puede clasificar si la solicitud está REGISTRADA");
 
-        if (nuevoTipo == null) throw new ReglaDominioException("El tipo de solicitud es obligatorio.");
+        if (observacion == null || observacion.isBlank()) {
+            throw new ReglaDominioException("La justificación (observación) es obligatoria para clasificar la solicitud.");
+        }
 
-        this.tipo = nuevoTipo;
-        this.estado = EstadoSolicitud.CLASIFICADA; // Transición coherente (RF-04)
+        if (funcionario == null) {
+            throw new ReglaDominioException("El funcionario que realiza la clasificación es obligatorio.");
+        }
+
+        // 2. Lógica flexible para el Tipo de Solicitud
+        if (nuevoTipo != null) {
+            this.tipo = nuevoTipo;
+        } else if (this.tipo == null) {
+            // Solo falla si NI el nuevo NI el actual existen
+            throw new ReglaDominioException("El tipo de solicitud debe definirse al menos una vez.");
+        }
+
+        // 3. Lógica flexible para la Prioridad
+        if (nuevaPrioridad != null) {
+            this.prioridad = nuevaPrioridad;
+        }
+
+        // 4. Cambio de estado y registro
+        this.estado = EstadoSolicitud.CLASIFICADA;
+
+        // Aseguramos que el historial no sea null antes de usarlo (Evita el Error 500)
+        if (this.historial == null) {
+            this.historial = new ArrayList<>();
+        }
+
         registrarEvento(TipoAccion.CLASIFICADA, funcionario, observacion);
     }
 
@@ -136,6 +168,7 @@ public class Solicitud {
             if (obj == null) throw new ReglaDominioException("Faltan datos obligatorios para la solicitud");
         }
     }
+
 
     public void cambiarPrioridad(Prioridad nuevaPrioridad, Usuario funcionario, String observacion) {
         if (nuevaPrioridad == null) throw new ReglaDominioException("La nueva prioridad no puede ser nula.");
