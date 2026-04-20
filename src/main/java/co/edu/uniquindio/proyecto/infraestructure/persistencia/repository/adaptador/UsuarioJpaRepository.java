@@ -1,5 +1,7 @@
 package co.edu.uniquindio.proyecto.infraestructure.persistencia.repository.adaptador;
-
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.repository.usuario.UsuarioRepository;
 import co.edu.uniquindio.proyecto.domain.valueobject.DocumentoIdentidad;
@@ -11,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -56,6 +57,29 @@ public class UsuarioJpaRepository implements UsuarioRepository {
     @Override
     public List<Usuario> obtenerTodos() {
         return dataRepository.findAll().stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Usuario> obtenerUsuariosPaginados(int pagina, int tamaño) {
+
+        Pageable paginacion = PageRequest.of(pagina, tamaño, Sort.by("nombre").ascending());
+
+        return dataRepository.findAll(paginacion)
+                .stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+
+    }
+
+    @Override
+    public List<Usuario> obtenerUsuariosPorEstadoPaginado(String estado, int pagina, int tamaño) {
+        Pageable paginacion = PageRequest.of(pagina, tamaño);
+
+        return dataRepository.findByEstado(estado, paginacion)
+                .getContent() // Obtenemos la lista del objeto Page
+                .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }

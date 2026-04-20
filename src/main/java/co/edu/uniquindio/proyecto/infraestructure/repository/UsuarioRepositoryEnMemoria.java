@@ -47,4 +47,14 @@ public class UsuarioRepositoryEnMemoria implements UsuarioRepository {
         return new ArrayList<>(baseDatos.values());
     }
 
+    @Override
+    public List<Usuario> obtenerUsuariosPaginados(int pagina, int tamaño) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<Usuario> obtenerUsuariosPorEstadoPaginado(String estado, int pagina, int tamaño) {
+        return new ArrayList<>();
+    }
+
 }

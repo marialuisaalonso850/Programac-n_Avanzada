@@ -26,7 +26,7 @@ class UsuarioJpaRepositoryTest {
 
     @Test
     void debeGuardarYBuscarUsuario() {
-        // GIVEN - Creamos un objeto de DOMINIO (porque el adaptador recibe Dominio)
+
         Usuario usuario = Usuario.crear(
                 new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "1094123"),
                 "Prueba Persistencia",
@@ -34,10 +34,8 @@ class UsuarioJpaRepositoryTest {
                 TipoUsuario.ESTUDIANTE
         );
 
-        // WHEN - Usamos el método definido en tu interfaz UsuarioRepository
         usuarioJpaRepository.crearUsuario(usuario);
 
-        // THEN - Buscamos usando el Value Object de identificación
         Optional<Usuario> encontrado = usuarioJpaRepository.obtenerPorIdentificacion(
                 new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "1094123")
         );

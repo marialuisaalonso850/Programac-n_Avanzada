@@ -21,4 +21,8 @@ public interface UsuarioRepository {
 
     boolean existePorEmail(Email email);
     List<Usuario> obtenerTodos();
+
+    List<Usuario> obtenerUsuariosPaginados(int pagina, int tamaño);
+
+    List<Usuario> obtenerUsuariosPorEstadoPaginado(String estado, int pagina, int tamaño);
 }
