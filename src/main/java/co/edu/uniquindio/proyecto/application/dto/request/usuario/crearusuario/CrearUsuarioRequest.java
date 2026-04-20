@@ -1,12 +1,13 @@
 package co.edu.uniquindio.proyecto.application.dto.request.usuario.crearusuario;
+import co.edu.uniquindio.proyecto.domain.valueobject.TipoDocumento;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CrearUsuarioRequest(
-        @NotBlank(message = "El tipo de documento es obligatorio")
-        String tipoDocumento,
+        @NotNull(message = "El tipo de documento es obligatorio")
+        TipoDocumento tipoDocumento,
 
         @NotBlank(message = "La identificación es obligatoria")
         String identificacion,
@@ -20,5 +21,9 @@ public record CrearUsuarioRequest(
         String email,
 
         @NotBlank(message = "El tipo de usuario es obligatorio")
-        String tipoUsuario
+        String tipoUsuario,
+
+        @NotBlank(message = "La contraseña es obligatoria")
+        @Size(min = 6, message = "La contraseña debe tener mínimo 6 caracteres")
+        String password
 ) {}

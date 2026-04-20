@@ -10,9 +10,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface UsuarioMapper {
 
-    @Mapping(target = "identificacion", source = "request")
-    @Mapping(target = "email", source = "request")
-    @Mapping(target = "estado", ignore = true) // El constructor de Usuario lo pone ACTIVO por defecto
+    @Mapping(target = "identificacion", expression = "java(mapToDocumento(request))")
+    @Mapping(target = "email", expression = "java(mapToEmail(request))")
+    @Mapping(target = "tipoUsuario", expression = "java(mapToTipoUsuario(request.tipoUsuario()))")
+    @Mapping(target = "estado", ignore = true)
     Usuario toDomain(CrearUsuarioRequest request);
 
     @Mapping(target = "identificacion", source = "identificacion.numero")
@@ -20,10 +21,9 @@ public interface UsuarioMapper {
     @Mapping(target = "activo", expression = "java(usuario.getEstado() == co.edu.uniquindio.proyecto.domain.valueobject.EstadoUsuario.ACTIVO)")
     DetalleUsuarioResponse toDetalleResponse(Usuario usuario);
 
-    // MÉTODOS DE APOYO: Aquí le explicas a MapStruct cómo crear tus Value Objects
     default DocumentoIdentidad mapToDocumento(CrearUsuarioRequest request) {
         return new DocumentoIdentidad(
-                TipoDocumento.valueOf(request.tipoDocumento().toUpperCase()),
+                request.tipoDocumento(),
                 request.identificacion()
         );
     }

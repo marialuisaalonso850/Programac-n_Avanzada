@@ -13,7 +13,7 @@ import lombok.*;
 public class UsuarioEntity {
 
     @Id
-    private String identificacion; // Número de documento como PK
+    private String identificacion;
 
     @Column(nullable = false)
     private String tipoDocumento;
@@ -29,4 +29,8 @@ public class UsuarioEntity {
 
     @Column(nullable = false)
     private String estado;
+
+    @Column(nullable = false)
+    private String password;
+
 }

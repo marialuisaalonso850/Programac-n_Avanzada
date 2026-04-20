@@ -1,4 +1,5 @@
 package co.edu.uniquindio.proyecto.infraestructure.persistencia.repository.jpadata;
+
 import co.edu.uniquindio.proyecto.infraestructure.persistencia.entity.UsuarioEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +37,3 @@ public interface UsuarioJpaDataRepository extends JpaRepository<UsuarioEntity, S
     Page<UsuarioEntity> findByEstado(String estado, Pageable pageable);
 
 }
-
-
-
-

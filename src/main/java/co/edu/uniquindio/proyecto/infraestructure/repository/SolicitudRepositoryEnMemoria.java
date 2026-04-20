@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.infraestructure.repository;
+/**package co.edu.uniquindio.proyecto.infraestructure.repository;
 
 import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
 import co.edu.uniquindio.proyecto.domain.repository.solicitud.SolicitudRepository;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
-@Repository
+
 public class SolicitudRepositoryEnMemoria implements SolicitudRepository {
 
     private final Map<String, Solicitud> baseDatos = new HashMap<>();
@@ -53,4 +53,4 @@ public class SolicitudRepositoryEnMemoria implements SolicitudRepository {
                         s.getResponsable().getIdentificacion().equals(responsableId))
                 .toList();
     }
-}
+}**/

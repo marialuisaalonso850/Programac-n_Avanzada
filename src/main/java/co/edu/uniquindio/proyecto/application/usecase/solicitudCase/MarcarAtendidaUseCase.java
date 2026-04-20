@@ -3,14 +3,13 @@ package co.edu.uniquindio.proyecto.application.usecase.solicitudCase;
 import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
 import co.edu.uniquindio.proyecto.domain.exception.EntidadNoEncontradaException;
 import co.edu.uniquindio.proyecto.domain.repository.solicitud.SolicitudRepository;
-import co.edu.uniquindio.proyecto.domain.valueobject.SolicitudId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class CerrarSolicitudUseCase {
+public class MarcarAtendidaUseCase {
 
     private final SolicitudRepository repository;
 
@@ -21,7 +20,7 @@ public class CerrarSolicitudUseCase {
                 .orElseThrow(() -> new EntidadNoEncontradaException(
                         "Solicitud no encontrada: " + id));
 
-        solicitud.cerrar(observacion);
+        solicitud.marcarComoAtendida(observacion);
         repository.save(solicitud);
         return solicitud;
     }

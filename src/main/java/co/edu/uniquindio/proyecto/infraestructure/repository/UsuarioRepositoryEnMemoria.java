@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.infraestructure.repository;
+/**package co.edu.uniquindio.proyecto.infraestructure.repository;
 
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.repository.usuario.UsuarioRepository;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 
 
-@Repository
+
 public class UsuarioRepositoryEnMemoria implements UsuarioRepository {
 
     private final Map<DocumentoIdentidad, Usuario> baseDatos = new HashMap<>();
@@ -46,6 +46,7 @@ public class UsuarioRepositoryEnMemoria implements UsuarioRepository {
     public List<Usuario> obtenerTodos() {
         return new ArrayList<>(baseDatos.values());
     }
+<<<<<<< HEAD
 
     @Override
     public List<Usuario> obtenerUsuariosPaginados(int pagina, int tamaño) {
@@ -58,3 +59,5 @@ public class UsuarioRepositoryEnMemoria implements UsuarioRepository {
     }
 
 }
+=======
+}**/

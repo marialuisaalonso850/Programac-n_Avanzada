@@ -1,9 +1,11 @@
 package co.edu.uniquindio.proyecto.infraestructure.rest.controller;
-import co.edu.uniquindio.proyecto.application.usecase.solicitudCase.*;
 
+import co.edu.uniquindio.proyecto.application.dto.request.solicitud.AtenderSolicitud.AtenderSolicitudRequest;
+import co.edu.uniquindio.proyecto.application.dto.request.solicitud.CancelarSolicitud.CancelarSolicitudRequest;
 import co.edu.uniquindio.proyecto.application.dto.request.solicitud.asignarresponsable.AsignarResponsableRequest;
-import co.edu.uniquindio.proyecto.application.dto.request.solicitud.crearsolicitud.CrearSolicitudRequest;
+import co.edu.uniquindio.proyecto.application.dto.request.solicitud.cerrarSolicitud.CerrarSolicitudRequest;
 import co.edu.uniquindio.proyecto.application.dto.request.solicitud.clasificarsolicitud.ClasificarSolicitudRequest;
+import co.edu.uniquindio.proyecto.application.dto.request.solicitud.crearsolicitud.CrearSolicitudRequest;
 import co.edu.uniquindio.proyecto.application.dto.response.solicitud.historial.EventoHistorialResponse;
 import co.edu.uniquindio.proyecto.application.dto.response.solicitud.listasolicitud.PaginaSolicitudes;
 import co.edu.uniquindio.proyecto.application.dto.response.solicitud.solicitudcompleta.SolicitudDetalleResponse;
@@ -11,89 +13,129 @@ import co.edu.uniquindio.proyecto.application.usecase.solicitudCase.*;
 import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
 import co.edu.uniquindio.proyecto.domain.valueobject.*;
 import co.edu.uniquindio.proyecto.infraestructure.rest.mapper.SolicitudMapper;
+import co.edu.uniquindio.proyecto.infraestructure.rest.security.helper.UsuarioAutenticado;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
+@SecurityRequirement(name = "bearerAuth")
 @RequestMapping("/api/solicitudes")
 @RequiredArgsConstructor
+@Tag(name = "Solicitudes", description = "Gestión del agregado Solicitud")
 public class SolicitudController {
 
     private final CrearSolicitudUseCase crearSolicitudUseCase;
     private final ConsultarSolicitudesPorEstadoUseCase consultarUseCase;
     private final ClasificarSolicitudUseCase clasificarUseCase;
     private final AsignarResponsableUseCase asignarUseCase;
+    private final MarcarAtendidaUseCase marcarAtendidaUseCase;
+    private final CerrarSolicitudUseCase cerrarUseCase;
+    private final CancelarSolicitudUseCase cancelarUseCase;
+    private final UsuarioAutenticado usuarioAutenticado;
     private final SolicitudMapper mapper;
 
-    // RF-01: Registro de solicitudes
     @PostMapping
-    public ResponseEntity<SolicitudDetalleResponse> crear(@Valid @RequestBody CrearSolicitudRequest request) {
-        Solicitud solicitud = crearSolicitudUseCase.ejecutar(request);
-        SolicitudDetalleResponse response = mapper.toDetalleResponse(solicitud);
+    @Operation(summary = "Crear una nueva solicitud")
+    public ResponseEntity<SolicitudDetalleResponse> crearSolicitud(
+            @Valid @RequestBody CrearSolicitudRequest request) {
 
-        URI location = org.springframework.web.servlet.support.ServletUriComponentsBuilder
-                .fromCurrentRequest().path("/solicitudes/{id}")
-                .buildAndExpand(solicitud.getId().getValue()).toUri();
+        // Se obtiene el documento directamente del Token JWT
+        DocumentoIdentidad solicitanteDoc = usuarioAutenticado.getDocumentoIdentidad();
+        Solicitud solicitud = crearSolicitudUseCase.ejecutar(request, solicitanteDoc);
 
-        return ResponseEntity.created(location).body(response);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}").buildAndExpand(solicitud.getId().getValue()).toUri();
+
+        return ResponseEntity.created(location).body(mapper.toDetalleResponse(solicitud));
     }
 
-    // RF-07: Consulta y Seguimiento (Listado Paginado)
-    @GetMapping
-    public ResponseEntity<PaginaSolicitudes> listar(
-            @RequestParam(required = false) EstadoSolicitud estado,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    @PutMapping("/{id}/atender")
+    @Operation(summary = "Marcar solicitud como atendida")
+    public ResponseEntity<SolicitudDetalleResponse> atender(
+            @PathVariable String id,
+            @Valid @RequestBody AtenderSolicitudRequest request) {
 
-        PaginaSolicitudes respuesta = consultarUseCase.ejecutarPaginado(estado, page, size);
+        Solicitud solicitud = marcarAtendidaUseCase.ejecutar(id, request.observacion());
+        return ResponseEntity.ok(mapper.toDetalleResponse(solicitud));
+    }
+
+    @PutMapping("/{id}/cerrar")
+    @Operation(summary = "Cerrar definitivamente una solicitud")
+    public ResponseEntity<SolicitudDetalleResponse> cerrar(
+            @PathVariable String id,
+            @Valid @RequestBody CerrarSolicitudRequest request) {
+
+        Solicitud solicitud = cerrarUseCase.ejecutar(id, request.observacion());
+        return ResponseEntity.ok(mapper.toDetalleResponse(solicitud));
+    }
+
+    @PutMapping("/{id}/cancelar")
+    @Operation(summary = "Cancelar una solicitud")
+    public ResponseEntity<SolicitudDetalleResponse> cancelar(
+            @PathVariable String id,
+            @Valid @RequestBody CancelarSolicitudRequest request) {
+
+        // Extraemos quién cancela desde el Token (Seguridad mejorada)
+        DocumentoIdentidad actorId = usuarioAutenticado.getDocumentoIdentidad();
+
+        Solicitud solicitud = cancelarUseCase.ejecutar(id, actorId, request.motivo());
+        return ResponseEntity.ok(mapper.toDetalleResponse(solicitud));
+    }
+
+    @GetMapping
+    @Operation(summary = "Listar solicitudes con filtros y paginación")
+    public ResponseEntity<PaginaSolicitudes> listarSolicitudes(
+            @RequestParam(required = false) EstadoSolicitud estado,
+            @RequestParam(required = false) Prioridad prioridad,
+            @RequestParam(required = false) String solicitanteId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        PaginaSolicitudes respuesta = consultarUseCase.ejecutarPaginado(estado, prioridad, solicitanteId, page, size);
         return ResponseEntity.ok(respuesta);
     }
 
-    // Obtener detalle de una solicitud específica
     @GetMapping("/{id}")
-    public ResponseEntity<SolicitudDetalleResponse> obtenerPorId(@PathVariable String id) {
-        Solicitud solicitud = consultarUseCase.obtenerPorId(id);
-        SolicitudDetalleResponse response = mapper.toDetalleResponse(solicitud);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Obtener detalle de una solicitud por ID")
+    public ResponseEntity<SolicitudDetalleResponse> obtenerSolicitudPorId(@PathVariable String id) {
+        return ResponseEntity.ok(mapper.toDetalleResponse(consultarUseCase.obtenerPorId(id)));
     }
 
-    // RF-02: Clasificación y Priorización
     @PutMapping("/{id}/clasificar")
-    public ResponseEntity<SolicitudDetalleResponse> clasificar(
+    @Operation(summary = "Clasificar tipo y prioridad de solicitud")
+    public ResponseEntity<SolicitudDetalleResponse> clasificarSolicitud(
             @PathVariable String id,
             @Valid @RequestBody ClasificarSolicitudRequest request) {
-        Solicitud actualizada = clasificarUseCase.ejecutar(id, request);
-        return ResponseEntity.ok(mapper.toDetalleResponse(actualizada));
+        Solicitud solicitud = clasificarUseCase.ejecutar(id, request);
+
+        return ResponseEntity.ok(mapper.toDetalleResponse(solicitud));
     }
 
-    // RF-05: Asignación de Responsables
     @PutMapping("/{id}/asignar")
-    public ResponseEntity<SolicitudDetalleResponse> asignar(
+    @Operation(summary = "Asignar un responsable a la solicitud")
+    public ResponseEntity<Void> asignarResponsable(
             @PathVariable String id,
             @Valid @RequestBody AsignarResponsableRequest request) {
 
-        SolicitudId solicitudId = new SolicitudId(UUID.fromString(id));
+        asignarUseCase.ejecutar(id, request.responsableId());
 
-        DocumentoIdentidad respId = new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, request.responsableId());
-
-        DocumentoIdentidad gestorId = new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, request.responsableId());
-
-        Solicitud actualizada = asignarUseCase.ejecutar(solicitudId, respId, gestorId);
-
-        return ResponseEntity.ok(mapper.toDetalleResponse(actualizada));
+        return ResponseEntity.noContent().build();
     }
 
-    // RF-06: Trazabilidad (Historial)
     @GetMapping("/{id}/historial")
+    @Operation(summary = "Consultar historial de eventos de una solicitud")
     public ResponseEntity<List<EventoHistorialResponse>> obtenerHistorial(@PathVariable String id) {
-        List<Historial> historial = consultarUseCase.obtenerHistorial(id);
-        List<EventoHistorialResponse> response = mapper.toHistorialResponseList(historial);
-        return ResponseEntity.ok(response);
+        var historial = consultarUseCase.obtenerHistorial(id);
+        return ResponseEntity.ok(mapper.toHistorialResponseList(historial));
     }
 }

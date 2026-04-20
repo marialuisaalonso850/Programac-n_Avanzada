@@ -6,49 +6,33 @@ import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.repository.solicitud.SolicitudRepository;
 import co.edu.uniquindio.proyecto.domain.service.usuario.obtenerusuariobyid.ObtenerUsuarioService;
 import co.edu.uniquindio.proyecto.domain.valueobject.*;
-import lombok.RequiredArgsConstructor; //
-import org.springframework.stereotype.Service; //
-import org.springframework.transaction.annotation.Transactional; //
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor // Genera el constructor para inyectar dependencias automáticamente
+@RequiredArgsConstructor
 public class CrearSolicitudUseCase {
 
     private final SolicitudRepository solicitudRepository;
     private final ObtenerUsuarioService usuarioService;
 
     @Transactional
-    public Solicitud ejecutar(CrearSolicitudRequest request) {
+    public Solicitud ejecutar(CrearSolicitudRequest request, DocumentoIdentidad documentoSolicitante) {
 
-        TipoDocumento tipoDoc = TipoDocumento.valueOf(request.tipoDocumento());
-        DocumentoIdentidad documento = new DocumentoIdentidad(tipoDoc, request.solicitanteId());
-
-        Usuario usuario = usuarioService.obtenerUsuario(documento);
+        Usuario usuario = usuarioService.obtenerUsuario(documentoSolicitante);
 
         Solicitud solicitud = new Solicitud(
-                new SolicitudId(UUID.randomUUID()),
+                SolicitudId.generar(),
                 new Descripcion(request.descripcion()),
                 usuario,
                 Prioridad.MEDIA,
                 request.canalOrigen()
         );
 
-        return solicitudRepository.save(solicitud);
-    }
-
-    @Transactional
-    public Solicitud ejecutar(SolicitudId solId, Descripcion desc, DocumentoIdentidad clienteId, Prioridad prioridad, CanalOrigen canalOrigen) {
-        Usuario usuario = usuarioService.obtenerUsuario(clienteId);
-        Solicitud solicitud = new Solicitud(
-                solId,
-                desc,
-                usuario,
-                prioridad,
-                canalOrigen
-        );
-
-        return solicitudRepository.save(solicitud);
+        solicitudRepository.save(solicitud);
+        return solicitud;
     }
 }

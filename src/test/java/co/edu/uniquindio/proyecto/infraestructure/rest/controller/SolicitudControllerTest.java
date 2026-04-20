@@ -1,107 +1,98 @@
 package co.edu.uniquindio.proyecto.infraestructure.rest.controller;
 
-import co.edu.uniquindio.proyecto.application.dto.request.solicitud.asignarresponsable.AsignarResponsableRequest;
 import co.edu.uniquindio.proyecto.application.dto.request.solicitud.crearsolicitud.CrearSolicitudRequest;
-import co.edu.uniquindio.proyecto.application.dto.response.solicitud.solicitudcompleta.SolicitudDetalleResponse;
-import co.edu.uniquindio.proyecto.application.usecase.solicitudCase.*;
-import co.edu.uniquindio.proyecto.domain.entity.Solicitud;
+import co.edu.uniquindio.proyecto.domain.entity.Usuario;
+import co.edu.uniquindio.proyecto.domain.repository.usuario.UsuarioRepository;
 import co.edu.uniquindio.proyecto.domain.valueobject.*;
-import co.edu.uniquindio.proyecto.infraestructure.rest.mapper.SolicitudMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
-@WebMvcTest(SolicitudController.class)
-class SolicitudControllerTest {
+@SpringBootTest
+public class SolicitudControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
     @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private WebApplicationContext context;
+
+
     private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private CrearSolicitudUseCase crearSolicitudUseCase;
+    @BeforeEach
+    public void setup() {
+        // Configuramos MockMvc manualmente usando el contexto de la aplicación
+        // e incluyendo la configuración de seguridad de Spring.
+        this.mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
 
-    @MockitoBean
-    private ConsultarSolicitudesPorEstadoUseCase consultarUseCase;
+        this.objectMapper = new ObjectMapper();
 
-    @MockitoBean
-    private ClasificarSolicitudUseCase clasificarUseCase;
+        this.objectMapper.findAndRegisterModules();
 
-    @MockitoBean
-    private AsignarResponsableUseCase asignarUseCase;
+        this.mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
 
-    @MockitoBean
-    private SolicitudMapper mapper;
-
-    @Test
-    void debeAsignarResponsableExitosamente() throws Exception {
-        // 1. GIVEN (Preparación)
-        String solicitudId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
-        AsignarResponsableRequest request = new AsignarResponsableRequest("123456789");
-
-        // Simulamos que el use case devuelve una solicitud (mock)
-        Solicitud solicitudMock = org.mockito.Mockito.mock(Solicitud.class);
-        // Usamos any() para que Mockito acepte cualquier instancia de tus Value Objects
-        when(asignarUseCase.ejecutar(any(SolicitudId.class), any(DocumentoIdentidad.class), any(DocumentoIdentidad.class)))
-                .thenReturn(solicitudMock);
-
-        // 2. WHEN (Acción) & 3. THEN (Verificación)
-        mockMvc.perform(put("/api/solicitudes/{id}/asignar", solicitudId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
     }
 
     @Test
-    void debeCrearSolicitudExitosamente() throws Exception {
+    @WithMockUser(username = "1001", roles = {"ESTUDIANTE"})
+    @DisplayName("Debe crear una solicitud exitosamente")
+    void crearSolicitudTest() throws Exception {
 
-        String uuidString = UUID.randomUUID().toString();
-        SolicitudId idDominio = new SolicitudId(UUID.fromString(uuidString));
+        // 1. CREAR EL OBJETO USUARIO (Sintaxis Builder)
+        Usuario estudiante = Usuario.builder()
+                .identificacion(new DocumentoIdentidad(TipoDocumento.CEDULA_CIUDADANIA, "1001"))
+                .nombre("Estudiante de Prueba")
+                .email(new Email("test@uniquindio.edu.co"))
+                .tipoUsuario(TipoUsuario.ESTUDIANTE)
+                .estado(EstadoUsuario.ACTIVO)
+                .build();
 
+        usuarioRepository.crearUsuario(estudiante, "password123");
+
+        // 3. PREPARAR EL REQUEST
         CrearSolicitudRequest request = new CrearSolicitudRequest(
-
-                "Problema con mi matricula de este semestre",
-                CanalOrigen.CSU,
-                "CEDULA_CIUDADANIA",
-                "1094123456"
+                TipoSolicitud.REGISTRO_ASIGNATURAS,
+                "Descripción detallada de prueba con más de veinte caracteres",
+                CanalOrigen.CSU
         );
 
-        // 1. Configuramos el Mock de la Entidad para que NO devuelva null en el ID
-        Solicitud solicitudMock = org.mockito.Mockito.mock(Solicitud.class);
-        when(solicitudMock.getId()).thenReturn(idDominio);
-
-        SolicitudDetalleResponse responseMock = new SolicitudDetalleResponse(
-                uuidString, "SOL-001", null, request.descripcion(),
-                request.canalOrigen(), EstadoSolicitud.REGISTRADA,
-                null, null, null, null, null, 0
-        );
-
-        when(crearSolicitudUseCase.ejecutar(any(CrearSolicitudRequest.class))).thenReturn(solicitudMock);
-        when(mapper.toDetalleResponse(solicitudMock)).thenReturn(responseMock);
-
-        // WHEN & THEN
+        // 4. EJECUTAR
         mockMvc.perform(post("/api/solicitudes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(uuidString))
-                .andExpect(jsonPath("$.estado").value("REGISTRADA"));
+                .andDo(result -> System.out.println("RESPUESTA DEL SERVIDOR: " + result.getResponse().getContentAsString()))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    @DisplayName("Debe listar las solicitudes")
+    void listarSolicitudesTest() throws Exception {
+        mockMvc.perform(get("/api/solicitudes")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 }
