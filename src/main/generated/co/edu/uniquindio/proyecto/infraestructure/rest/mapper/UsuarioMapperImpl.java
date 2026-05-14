@@ -5,13 +5,12 @@ import co.edu.uniquindio.proyecto.application.dto.response.usuario.detalleusuari
 import co.edu.uniquindio.proyecto.domain.entity.Usuario;
 import co.edu.uniquindio.proyecto.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.proyecto.domain.valueobject.Email;
-import co.edu.uniquindio.proyecto.domain.valueobject.TipoUsuario;
 import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-04-17T21:35:50-0500",
+    date = "2026-05-11T09:25:07-0500",
     comments = "version: 1.6.3, compiler: javac, environment: Java 25.0.2 (Eclipse Adoptium)"
 )
 @Component
@@ -23,19 +22,16 @@ public class UsuarioMapperImpl implements UsuarioMapper {
             return null;
         }
 
-        DocumentoIdentidad identificacion = null;
-        Email email = null;
-        String nombre = null;
-        TipoUsuario tipoUsuario = null;
+        Usuario.UsuarioBuilder usuario = Usuario.builder();
 
-        identificacion = mapToDocumento( request );
-        email = mapToEmail( request );
-        nombre = request.nombre();
-        tipoUsuario = mapToTipoUsuario( request.tipoUsuario() );
+        usuario.nombre( request.nombre() );
+        usuario.password( request.password() );
 
-        Usuario usuario = new Usuario( identificacion, nombre, email, tipoUsuario );
+        usuario.identificacion( mapToDocumento(request) );
+        usuario.email( mapToEmail(request) );
+        usuario.tipoUsuario( mapToTipoUsuario(request.tipoUsuario()) );
 
-        return usuario;
+        return usuario.build();
     }
 
     @Override
